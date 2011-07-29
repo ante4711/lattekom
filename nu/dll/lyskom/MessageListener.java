@@ -6,6 +6,7 @@
 package nu.dll.lyskom;
 
 import java.net.ProtocolException;
+import java.net.SocketException;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Map;
@@ -187,10 +188,18 @@ class MessageListener implements Runnable {
                         + ": " + ex.getMessage());
                 exception = (Exception) (readError = ex);
 
+            } catch (SocketException ex) {
+                Debug.println("SocketException: " + ex.getClass().getName() + ": "
+                        + ex.getMessage());
+                ex.printStackTrace();
+                exception = (Exception) (readError = ex);
+                disconnect = true;
             } catch (IOException ex) {
                 Debug.println("IOException: " + ex.getClass().getName() + ": "
                         + ex.getMessage());
+                ex.printStackTrace();
                 exception = (Exception) (readError = ex);
+                disconnect = true;
             } catch (Exception ex) {
                 ex.printStackTrace();
                 exception = (Exception) (readError = ex);
