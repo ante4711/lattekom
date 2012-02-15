@@ -633,9 +633,15 @@ public class TextStat implements java.io.Serializable {
         KomToken[] miscInfoTokens = ((KomTokenArray) params[pcount++])
                 .getTokens();
 
-        KomToken auxItemArrayLengthToken = params[pcount++];
-        if (auxItemArrayLengthToken.isEmpty()) {
-            auxItemArrayLengthToken = params[pcount++];
+        try {
+            KomToken auxItemArrayLengthToken = params[pcount++];
+
+            if (auxItemArrayLengthToken.isEmpty()) {
+                auxItemArrayLengthToken = params[pcount++];
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // ERROR
+            return ts;
         }
 
         KomToken auxItemArrayToken = params[pcount++];
