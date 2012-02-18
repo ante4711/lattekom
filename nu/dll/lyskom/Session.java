@@ -3112,6 +3112,25 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
     }
 
     /* Note: 
+     * textNo will be a comment to commentNo
+     */
+    public RpcCall doAddComment(int textNo, int commentNo)
+            throws IOException {
+        RpcCall req = new RpcCall(count(), Rpc.C_add_comment).add(
+                new KomToken(textNo)).add(new KomToken(commentNo));
+        writeRpcCall(req);
+        return req;
+    }
+
+    public void addComment(int textNo, int commentNo)
+            throws IOException, RpcFailure {
+        RpcReply reply = waitFor(doAddComment(textNo, commentNo));
+        if (!reply.getSuccess())
+            throw reply.getException();
+        purgeTextCache(textNo);
+    }
+
+    /* Note: 
      * textNo must be a comment to commentNo
      */
     public RpcCall doSubComment(int textNo, int commentNo)
