@@ -3111,6 +3111,25 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
         purgeTextCache(textNo);
     }
 
+    /* Note: 
+     * textNo must be a comment to commentNo
+     */
+    public RpcCall doSubComment(int textNo, int commentNo)
+            throws IOException {
+        RpcCall req = new RpcCall(count(), Rpc.C_sub_comment).add(
+                new KomToken(textNo)).add(new KomToken(commentNo));
+        writeRpcCall(req);
+        return req;
+    }
+
+    public void subComment(int textNo, int commentNo)
+            throws IOException, RpcFailure {
+        RpcReply reply = waitFor(doSubComment(textNo, commentNo));
+        if (!reply.getSuccess())
+            throw reply.getException();
+        purgeTextCache(textNo);
+    }
+
     /**
      * Sends the RPC call who-is-on-dynamic to the server.
      * 
