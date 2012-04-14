@@ -197,6 +197,13 @@ public class Text extends Hollerith implements Serializable {
     }
 
     /**
+     * Return the number of marks on this text.
+     */
+    public int getMarks() {
+        return stat.marks;
+    }
+
+    /**
      * Returns the AuxItem data for a given AuxItem tag.
      * 
      * @see nu.dll.lyskom.AuxItem
