@@ -614,6 +614,7 @@ public class TextStat implements java.io.Serializable {
         List<Selection> miscInfo = ts.getMiscInfo();
 
         int pcount = offset;
+        try {
         ts.creationTime = new KomTime(params[pcount++].intValue(), // 0
                 params[pcount++].intValue(), // 1
                 params[pcount++].intValue(), // 2
@@ -628,11 +629,21 @@ public class TextStat implements java.io.Serializable {
         ts.lines = params[pcount++].intValue();
         ts.chars = params[pcount++].intValue();
         ts.marks = params[pcount++].intValue();
-
-        int arrayLength = params[pcount++].intValue();
-        KomToken[] miscInfoTokens = ((KomTokenArray) params[pcount++])
-                .getTokens();
-
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // TODO: ERROR
+            return ts;
+        }
+        int arrayLength;
+        KomToken[] miscInfoTokens;
+        try {
+            arrayLength = params[pcount++].intValue();
+            miscInfoTokens = ((KomTokenArray) params[pcount++])
+                    .getTokens();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // TODO: ERROR
+            return ts;
+        }
+        
         try {
             KomToken auxItemArrayLengthToken = params[pcount++];
 
