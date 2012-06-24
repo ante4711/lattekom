@@ -433,19 +433,41 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
         // if we're not connected, then state could never be anything
         // but STATE_DISCONNECTED, right? So we can return without
         // explicitly setting state to that.
-        if (!connected)
+        if ((!connected)&&(!force))
             return;
         // remove listeners/recievers
-        removeRpcEventListener(this);
-        if (listener != null) {
-            listener.setAsynch(false);
-            listener.removeAsynchMessageReceiver(this);
-            listener.removeRpcReplyReceiver(this);
-            listener.disconnect();
+        try {
+            removeRpcEventListener(this);
+        } catch (Exception e) {
+            log.error("Exception in " + this + "::disconnect() 1: " + e);
         }
-        invoker.quit();
+        if (listener != null) {
+            try {
+                listener.setAsynch(false);
+                listener.removeAsynchMessageReceiver(this);
+                listener.removeRpcReplyReceiver(this);
+            } catch (Exception e) {
+                log.error("Exception in " + this + "::disconnect() 2: " + e);
+            }
+            try {
+                listener.disconnect();
+            } catch (Exception e) {
+                log.error("Exception in " + this + "::disconnect() 3: " + e);
+            }
+        }
+        try {
+            invoker.quit();
+        } catch (Exception e) {
+            log.error("Exception in " + this + "::disconnect() 4: " + e);
+        }
+
         if (connection != null) {
-            connection.close();
+            try {
+                connection.close();
+            } catch (Exception e) {
+                log.error("Exception in " + this + "::disconnect() 5: " + e);
+            }
+
         }
         connection = null;
         connected = false;

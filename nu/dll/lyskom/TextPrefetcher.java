@@ -31,6 +31,8 @@ class TextPrefetcher implements Runnable {
                 Debug.println("Fetched text number " + textNo);
             } catch (IOException ex1) {
                 Debug.println("I/O error during pre-fetch: " + ex1.getMessage());
+            } catch (Exception ex) {
+                Debug.println("Error during pre-fetch: " + ex.getMessage());
             }
         }
         Debug.println("Prefetch list emtpy");

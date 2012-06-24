@@ -631,6 +631,7 @@ public class TextStat implements java.io.Serializable {
         ts.marks = params[pcount++].intValue();
         } catch (ArrayIndexOutOfBoundsException e) {
             // TODO: ERROR
+            Debug.println("Lattekom createFrom: Trying to recover from :"+e);
             return ts;
         }
         int arrayLength;
@@ -641,6 +642,11 @@ public class TextStat implements java.io.Serializable {
                     .getTokens();
         } catch (ArrayIndexOutOfBoundsException e) {
             // TODO: ERROR
+            Debug.println("Lattekom createFrom: Trying to recover from :"+e);
+            return ts;
+        } catch (ClassCastException e) {
+            // TODO: ERROR
+            Debug.println("Lattekom createFrom: Trying to recover from :"+e);
             return ts;
         }
         
@@ -652,6 +658,7 @@ public class TextStat implements java.io.Serializable {
             }
         } catch (ArrayIndexOutOfBoundsException e) {
             // ERROR
+            Debug.println("Lattekom createFrom: Trying to recover from :"+e);
             return ts;
         }
 
