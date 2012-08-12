@@ -28,7 +28,7 @@ public class Debug {
 	 */
 	public static void println(String msg) {
 		if (ENABLED)
-			System.err.println(Thread.currentThread().getName() + ": " + msg);
+			System.err.println("Lattekom " + Thread.currentThread().getName() + ": " + msg);
 	}
 
 	/**

@@ -9,7 +9,22 @@ package nu.dll.lyskom;
 import java.net.*;
 import java.io.*;
 
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.LinkedList;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 class Connection {
 
@@ -22,16 +37,122 @@ class Connection {
     private Session session;
     String server;
     int port;
-
+    boolean ssl_connection = true;
+    int cert_level = 0;
+    
     Thread queuedWriter = null;
     boolean keepRunning = true;
 
-    public Connection(Session session) throws IOException, UnknownHostException {
+    public Connection(Session session, InputStream root_stream) throws IOException, UnknownHostException {
         this.session = session;
         this.server = session.getServer();
         this.port = session.getPort();
+        this.ssl_connection = session.getUseSSL();
+        this.cert_level = session.getCertLevel();
+        
+        if (ssl_connection) {
+            Debug.println("Trying to make SSL Connection");
+            javax.net.ssl.SSLSocketFactory factory = null;
 
-        sock = new Socket(server, port);
+            switch (cert_level) {
+            case 0:
+                // TO ONLY TRUST CERTS TRACABLE TO DEFAULT ROOT CERTS
+                Debug.println("Allow only signed cert");
+                factory = HttpsURLConnection.getDefaultSSLSocketFactory();
+                break;
+            case 1:
+                // TO TRUST EMBEDDED ROOT CERTS
+                Debug.println("Allow embedded cert");
+                factory = newSslSocketFactory(root_stream);
+                break;
+            case 2:
+                // FOR TESTING: TO TRUST ANY CERTIFICATE
+                Debug.println("Use any cert");
+                X509TrustManager[] trustAllCerts = (X509TrustManager[]) new X509TrustManager[] { new X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(
+                            java.security.cert.X509Certificate[] certs,
+                            String authType) {
+                    }
+
+                    public void checkServerTrusted(
+                            java.security.cert.X509Certificate[] certs,
+                            String authType) {
+                    }
+                } };
+
+                // Install the all-trusting trust manager
+                try {
+                    SSLContext sc = SSLContext.getInstance("SSL");
+                    sc.init(null, trustAllCerts,
+                            new java.security.SecureRandom());
+                    factory = sc.getSocketFactory();
+                } catch (Exception e) {
+                    Debug.println("Error creating factory:" + e);
+                }
+                // factory.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+                // END BLOCK FOR TESTING: TO TRUST ANY CERTIFICATE
+            }
+            SSLSocket ssl_sock = null;
+            Debug.println("Creating a SSL Socket For " + server
+                    + " on port " + port);
+            ssl_sock = (SSLSocket) factory.createSocket(server, port);
+            
+            /**
+             * Starts an SSL handshake on this connection. Common reasons
+             * include a need to use new encryption keys, to change cipher
+             * suites, or to initiate a new session. To force complete
+             * reauthentication, the current session could be invalidated before
+             * starting this handshake. If data has already been sent on the
+             * connection, it continues to flow during this handshake. When the
+             * handshake completes, this will be signaled with an event. This
+             * method is synchronous for the initial handshake on a connection
+             * and returns when the negotiated handshake is complete. Some
+             * protocols may not support multiple handshakes on an existing
+             * socket and may throw an IOException.
+             */
+
+            ssl_sock.startHandshake();
+            System.out.println("Handshaking Complete");
+
+            /**
+             * Retrieve the server's certificate chain
+             * 
+             * Returns the identity of the peer which was established as part of
+             * defining the session. Note: This method can be used only when
+             * using certificate-based cipher suites; using it with
+             * non-certificate-based cipher suites, such as Kerberos, will throw
+             * an SSLPeerUnverifiedException.
+             * 
+             * 
+             * Returns: an ordered array of peer certificates, with the peer's
+             * own certificate first followed by any certificate authorities.
+             */
+            Certificate[] serverCerts = ssl_sock.getSession().getPeerCertificates();
+            Debug.println("Retreived Server's Certificate Chain");
+
+            Debug.println(serverCerts.length + " certificates found\n\n\n");
+            for (int i = 0; i < serverCerts.length; i++) {
+                Certificate myCert = serverCerts[i];
+                Debug.println("====Certificate:" + (i + 1) + "====");
+                Debug.println("-Public Key-\n" + myCert.getPublicKey());
+                //Debug.println("-Public Key-\n" + myCert.toString());
+                Debug.println("-Certificate Type-\n " + myCert.getType());
+
+                Debug.println("");
+            }
+            sock = ssl_sock;
+        } else {
+            Debug.println("Connect without encryption");
+            sock = new Socket(server, port);
+        }
+        if(sock == null) {
+            Debug.println("Sock is null!");
+            return;
+        }
         input = sock.getInputStream();
         output = sock.getOutputStream();
 
@@ -197,6 +318,54 @@ class Connection {
         }
 
         return new String(os.toByteArray(), session.serverEncoding);
+    }
+    
+    private SSLSocketFactory newSslSocketFactory(InputStream in) {
+        KeyStore ks = null;
+        SSLSocketFactory factory = null;
+        try {
+            ks = KeyStore.getInstance("BKS");
+
+            // get user password and file input stream
+            char[] password = ("2fa190f4McD").toCharArray();
+            // Get the raw resource, which contains the keystore with your
+            // trusted certificates (root and any intermediate certs)
+            ks.load(in, password);
+            in.close();
+
+            SSLContext sc = null;
+            sc = SSLContext.getInstance("TLS");
+            KeyManagerFactory kmf = null;
+            kmf = KeyManagerFactory.getInstance("X509");
+            TrustManagerFactory tmf = null;
+            tmf = TrustManagerFactory.getInstance("X509");
+
+            kmf.init(ks, password);
+            tmf.init(ks);
+
+            sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+            factory = sc.getSocketFactory();
+        } catch (KeyManagementException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (UnrecoverableKeyException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return factory;
     }
 
 }

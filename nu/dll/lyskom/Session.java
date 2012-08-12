@@ -200,7 +200,9 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
     boolean loggedIn = false;
     String server = null;
     int port = 4894;
-
+    boolean useSSL = true;
+    int cert_level = 0;
+    
     int rpcCount = 0;
     int lastRpcCall = 0;
 
@@ -498,12 +500,14 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
      * @return <tt>true</tt> if the connection was successful
      * @see nu.dll.lyskom.Session#connect(String)
      */
-    public boolean connect(String server, int port) throws IOException,
+    public boolean connect(String server, int port, boolean useSSL, int cert_level, InputStream root_stream) throws IOException,
             ProtocolException {
         this.server = server;
         this.port = port;
-
-        connection = new Connection(this);
+        this.useSSL = useSSL;
+        this.cert_level = cert_level;
+        
+        connection = new Connection(this, root_stream);
         reader = new KomTokenReader(connection.getInputStream(), this);
 
         byte[] userdata = new Hollerith(clientUser
@@ -563,6 +567,13 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
         return port;
     }
 
+    public boolean getUseSSL() {
+        return useSSL;
+    }
+    
+    public int getCertLevel() {
+        return cert_level;
+    }
     /**
      * Connect to specified server on the default port (4894) and do initial
      * handshake
@@ -572,8 +583,8 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
      * @see nu.dll.lyskom.Session#connect(String, int)
      * @return <tt>true</tt> if the connection was successful
      */
-    public boolean connect(String server) throws IOException, ProtocolException {
-        return connect(server, port);
+    public boolean connect(String server, boolean useSSL, int cert_level, InputStream root_stream) throws IOException, ProtocolException {
+        return connect(server, port, useSSL, cert_level, root_stream);
     }
 
     /**
