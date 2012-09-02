@@ -106,8 +106,16 @@ class TextCache {
                         sortedAges.add(lastIndex + 1, l);
                         sortedTexts.add(lastIndex + 1, textIterator.next());
                     } else {
-                        sortedAges.add(lastIndex, l);
-                        sortedTexts.add(lastIndex, textIterator.next());
+                        try {
+                            sortedAges.add(lastIndex, l);
+                            sortedTexts.add(lastIndex, textIterator.next());
+                        } catch (java.util.NoSuchElementException e) {
+                            if (DEBUG) {
+                                Debug.println("lattekom TextCache: Trying to recover from Exception:"
+                                        + e);
+                                return;
+                            }
+                        }
                     }
                     lastIndex++;
                 }
