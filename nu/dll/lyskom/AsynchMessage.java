@@ -47,7 +47,13 @@ public class AsynchMessage {
 	 * @see nu.dll.lyskom.Asynch
 	 */
 	public int getNumber() {
-		return parameters[1].intValue();
+	    int value = -1;
+	    try {
+	        value = parameters[1].intValue();
+	    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+	        //
+	    }
+		return value;
 	}
 
 	/**
@@ -62,18 +68,18 @@ public class AsynchMessage {
 	 * Returns a String representation.
 	 */
 	public String toString() {
-		StringBuffer blaj = new StringBuffer("AsynchMessage: <#" + getNumber()
+		StringBuffer buffer = new StringBuffer("AsynchMessage: <#" + getNumber()
 				+ "> ");
 
 		if (parameters == null || parameters.length == 0) {
-			blaj.append("empty");
-			return blaj.toString();
+			buffer.append("empty");
+			return buffer.toString();
 		}
 
 		for (int i = 0; i < parameters.length; i++)
-			blaj.append("<" + parameters[i].toString() + ">");
+			buffer.append("<" + parameters[i].toString() + ">");
 
-		return blaj.toString();
+		return buffer.toString();
 	}
 
 }

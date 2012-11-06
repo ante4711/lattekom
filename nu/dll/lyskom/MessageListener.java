@@ -183,11 +183,14 @@ class MessageListener implements Runnable {
                 for (int i = 0; i < tokens.size(); i++) {
                     row[i] = (KomToken) ti.next();
                 }
+            } catch (OutOfMemoryError ex) {
+                Debug.println("OutOfMemoryException: " + ex.getClass().getName()
+                        + ": " + ex.getMessage());
+                exception = (Exception) (readError = ex);
             } catch (ProtocolException ex) {
                 Debug.println("ProtocolException: " + ex.getClass().getName()
                         + ": " + ex.getMessage());
                 exception = (Exception) (readError = ex);
-
             } catch (SocketException ex) {
                 Debug.println("SocketException: " + ex.getClass().getName() + ": "
                         + ex.getMessage());
