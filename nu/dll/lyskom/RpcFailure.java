@@ -22,8 +22,14 @@ public class RpcFailure extends RuntimeException {
 		super(s);
 		reply = r;
 		if (!r.getSuccess()) {
-			errorCode = r.getParameters()[0].intValue();
-			errorStatus = r.getParameters()[1].intValue();
+            try {
+                errorCode = r.getParameters()[0].intValue();
+                errorStatus = r.getParameters()[1].intValue();
+            } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                reply = null;
+                errorCode = -1;
+                errorStatus = -1;
+            }
 		}
 	}
 

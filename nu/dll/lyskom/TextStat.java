@@ -632,7 +632,11 @@ public class TextStat implements java.io.Serializable {
         } catch (ArrayIndexOutOfBoundsException e) {
             // TODO: ERROR
             Debug.println("Lattekom createFrom: Trying to recover from :"+e);
-            return ts;
+            return null;
+        } catch (RuntimeException e) {
+            // TODO: ERROR
+            Debug.println("Lattekom createFrom: Trying to recover from :"+e);
+            return null;
         }
         int arrayLength;
         KomToken[] miscInfoTokens;
