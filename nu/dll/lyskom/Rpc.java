@@ -428,4 +428,5 @@ public interface Rpc {
 	public final static int C_get_membership = 108;
 
     public final static int C_local_to_global_reverse = 121;
+    public final static int C_map_created_texts_reverse = 122;
 }

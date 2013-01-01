@@ -1809,6 +1809,92 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
         return m;
     }
 
+
+    /**
+     * Sends the RPC call mapCreatedTextsReverse to the server.
+     * 
+     * @param confNo
+     *            The conference number in which to map text numbers
+     * @param firstLocalNo
+     *            The first local number to map
+     * @param noOfExistingTexts
+     *            The maximum number of texts that the returned mapping should
+     *            contain
+     * @return An RpcCall object representing this specific RPC call
+     */
+    public RpcCall doMapCreatedTextsReverse(int confNo, int firstLocalNo,
+            int noOfExistingTexts) throws IOException {
+        RpcCall req = new RpcCall(count(), Rpc.C_map_created_texts_reverse);
+        req.add(new KomToken(confNo)).add(new KomToken(firstLocalNo))
+                .add(new KomToken(noOfExistingTexts));
+        writeRpcCall(req);
+        return req;
+    }
+
+    /**
+     * Returns a TextMapping that can be used to find texts written by
+     * specific user.
+     * 
+     * See the "<tt>mapCreatedTextsReverse</tt>" RPC call and the "
+     * <tt>Text-Mapping</tt>" data structure in the LysKOM specification for
+     * more information.
+     * 
+     * LysKOM call: mapCreatedTextsReverse, but without the limitation that
+     * noOfExistingTexts must be between 1-255 inclusive
+     * 
+     * @param confNo
+     *            The conference number in which to map text numbers
+     * @param firstLocalNo
+     *            The first local number to map
+     * @param noOfExistingTexts
+     *            The maximum number of texts that the returned mapping should
+     *            contain
+     * @see nu.dll.lyskom.Session#domapCreatedTextsReverse(int, int, int)
+     */
+    public TextMapping mapCreatedTextsReverse(int confNo, int firstLocalNo,
+            int noOfExistingTexts) throws IOException, RpcFailure {
+        String key = confNo + "-" + firstLocalNo + "-" + noOfExistingTexts;
+        Reference<?> ref;
+        TextMapping m;
+        synchronized (ltgCache) {
+            ref = (Reference<?>) ltgCache.get(key);
+            m = (TextMapping) (ref != null ? ref.get() : null);
+        }
+
+        if (m != null) {
+            Debug.println("returning cached TextMapping " + m);
+            m.first();
+            return m;
+        }
+
+        m = new TextMapping();
+
+        int offset = 0;
+        int existingTextsLeft;
+        // if noOfExistingTexts is larger than 255, break up in several calls
+        // this code could probably be a lot more legible
+        do {
+            existingTextsLeft = noOfExistingTexts - offset;
+            int _noOfExistingTexts = existingTextsLeft > 255 ? 255
+                    : existingTextsLeft;
+            Debug.println("Doing mapCreatedTextsReverse " + confNo + ", "
+                    + (firstLocalNo + offset) + ", " + _noOfExistingTexts);
+            RpcReply r = waitFor(doMapCreatedTextsReverse(confNo, firstLocalNo + offset,
+                    _noOfExistingTexts).getId());
+            if (!r.getSuccess())
+                throw new RpcFailure(r, "in mapCreatedTextsReverse(" + confNo + ", "
+                        + firstLocalNo + ", " + noOfExistingTexts + ")");
+
+            m.update(0, r.getParameters(), false);
+            offset += 255;
+        } while (m.laterTextsExists && (noOfExistingTexts - offset) > 0);
+
+        synchronized (ltgCache) {
+            ltgCache.put(key, new SoftReference<TextMapping>(m));
+        }
+        return m;
+    }
+
     /**
      * Sends the RPC call query-read-texts to the server.
      * 
