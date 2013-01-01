@@ -71,7 +71,7 @@ class MessageListener implements Runnable {
 
     protected void addHollerithStreamReceiver(int id, int limit) {
         synchronized (streamReceivers) {
-            streamReceivers.put(new Integer(id), new Integer(limit));
+            streamReceivers.put(Integer.valueOf(id), Integer.valueOf(limit));
         }
     }
 
