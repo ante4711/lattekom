@@ -51,8 +51,13 @@ public class AsynchInvoker extends Thread {
             runnables.addLast(r);
             runnables.notifyAll();
         }
-        if (!isAlive())
-            start();
+        if (!isAlive()) {
+            try {
+                start();
+            } catch (IllegalThreadStateException e) {
+                Debug.println("lattekom.AsynchInvoker.enqueue failed to start():"+e);
+            }
+        }
     }
 
 }

@@ -35,6 +35,6 @@ class TextPrefetcher implements Runnable {
                 Debug.println("Error during pre-fetch: " + ex.getMessage());
             }
         }
-        Debug.println("Prefetch list emtpy");
+        Debug.println("Prefetch list empty");
     }
 }
