@@ -285,9 +285,16 @@ public class TextStat implements java.io.Serializable {
      * Returns the MIME charset for this text.
      */
     public String getCharset() {
-    	String defaultCharset = "iso-8859-1";
-	String ctCharset = parseContentTypeParameters(getFullContentType()).get("charset");
-	return ctCharset != null ? ctCharset : defaultCharset;
+        String defaultCharset = "iso-8859-1";
+        String ctCharset = parseContentTypeParameters(getFullContentType())
+                .get("charset");
+
+        if (ctCharset == null) {
+            ctCharset = defaultCharset;
+        } else if (ctCharset.compareToIgnoreCase("us-ascii") == 0) {
+            ctCharset = defaultCharset;
+        }
+        return ctCharset;
     }
 
     static Map<String,String> parseContentTypeParameters(String contentType) {
