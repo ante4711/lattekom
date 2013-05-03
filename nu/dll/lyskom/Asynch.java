@@ -96,5 +96,11 @@ public interface Asynch {
 	 * membership.
 	 */
 	public final static int new_membership = 18;
+    /**
+     * This message is sent when a conference has been added to a person's
+     * membership.
+     */
+    public final static int text_aux_changed = 22;
 
+	
 }
