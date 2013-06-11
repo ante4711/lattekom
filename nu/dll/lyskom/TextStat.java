@@ -695,7 +695,8 @@ public class TextStat implements java.io.Serializable {
             case 15: // bcc-recipient
                 selection = new Selection();
                 miscInfo.add(selection);
-
+                
+                //$FALL-THROUGH$
             case 6: // loc-no ! Lokalt textnummer
             case 8: // sent-by
                 int value = miscInfoTokens[mcount++].intValue();

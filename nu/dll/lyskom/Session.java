@@ -3994,6 +3994,7 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
 
         case Asynch.new_text_old:
             textStat = TextStat.createFrom(textNo, parameters, 1, true);
+            //$FALL-THROUGH$
         case Asynch.new_text:
             if (textStat == null)
                 textStat = TextStat.createFrom(textNo, parameters, 1, false);

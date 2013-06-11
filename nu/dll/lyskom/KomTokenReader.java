@@ -159,9 +159,11 @@ class KomTokenReader {
 					if (token == null && os.size() == 0) {
 						break;
 					}
-				case '\n' :
+				//$FALL-THROUGH$
+                case '\n' :
 					wasEol = true;
-				case ' ' :
+				//$FALL-THROUGH$
+                case ' ' :
 					if (lastB == b)
 						break;
 
