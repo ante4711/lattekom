@@ -2378,7 +2378,11 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
 
 		RpcReply rep = null;
     	try {
-    		rep = waitFor(req.getId());
+    	    if(req != null) {
+    	        rep = waitFor(req.getId());
+    	    } else {
+                log.error("Session.getUConfStat2 req is null");
+    	    }
     	} catch (Exception e) {
             log.error("Session.getUConfStat2 Caught " + e.getClass().getName());
             log.error(getStackTraceString(e));
@@ -2393,9 +2397,12 @@ public class Session implements AsynchMessageReceiver, RpcReplyReceiver,
                 log.error(getStackTraceString(e));
             }
     		return cc;
-    	} else {
-    		throw rep.getException();
-    	}
+    	} 
+        if (rep != null) {
+            throw rep.getException();
+        } 
+        log.error("Session.getUConfStat4 rep is null!");
+        return null;
     }
 
     /**
