@@ -15,8 +15,8 @@ import java.util.TreeMap;
 class TextCache {
     final static boolean DEBUG = Boolean.getBoolean("lattekom.caches.debug");
 
-    int maxAge = 60 * 60 * 1000; // one hour
-    int maxSize = 100;
+    int maxAge = 60 * 60 * 1000 * 6 ; // 6 hours
+    int maxSize = 1000;
 
     Hashtable<Integer, Text> hash;
     TreeMap<Integer, Long> ageMap = new TreeMap<Integer, Long>();
@@ -29,8 +29,8 @@ class TextCache {
         if (Debug.ENABLED) {
             Debug.println("TextCache.remove(" + textNo + ")");
         }
-        hash.remove(new Integer(textNo));
-        ageMap.remove(new Integer(textNo));
+        hash.remove(Integer.valueOf(textNo));
+        ageMap.remove(Integer.valueOf(textNo));
     }
 
     public void add(Text t) {
@@ -39,25 +39,25 @@ class TextCache {
         checkLimits(0);
         if (DEBUG)
             Debug.println("TextCache: adding " + t.getNo());
-        if (hash.put(new Integer(t.getNo()), t) != null) {
+        if (hash.put(Integer.valueOf(t.getNo()), t) != null) {
             if (DEBUG)
                 Debug.println("TextCache: " + "replacing text #" + t.getNo()
                         + " in cache");
         }
 
-        ageMap.put(new Integer(t.getNo()), new Long(System.currentTimeMillis()));
+        ageMap.put(Integer.valueOf(t.getNo()), Long.valueOf(System.currentTimeMillis()));
     }
 
     public boolean contains(int n) {
         checkLimits(n);
-        return hash.contains(new Integer(n));
+        return hash.contains(Integer.valueOf(n));
     }
 
     public Text get(int textNo) {
-        checkLimits(textNo);
-        Text t = (Text) hash.get(new Integer(textNo));
+        Text t = hash.get(Integer.valueOf(textNo));
         if (DEBUG)
             Debug.println("TextCache: returning " + t);
+        checkLimits(textNo);
         return t;
     }
 
@@ -71,10 +71,12 @@ class TextCache {
      * implementation available. :-)
      */
     synchronized void checkLimits(int textNo) {
-        Integer iNo = new Integer(textNo);
+        Integer iNo = Integer.valueOf(textNo);
+        
+        // Remove texts that were added to cache more than maxAge ago
         if (textNo > 0 && ageMap.containsKey(iNo)) {
             long age = System.currentTimeMillis()
-                    - ((Long) ageMap.get(iNo)).longValue();
+                    - ageMap.get(iNo).longValue();
             if (age > maxAge) {
                 ageMap.remove(iNo);
                 hash.remove(iNo);
@@ -84,6 +86,7 @@ class TextCache {
             }
         }
 
+        // Remove oldest texts from cache if number of texts is more than maxSize
         if (hash.size() > maxSize) {
             List<Long> ages = new ArrayList<Long>(ageMap.values());
             List<Text> texts = new ArrayList<Text>(hash.values());
@@ -95,7 +98,7 @@ class TextCache {
             long lastValue = 0;
             int lastIndex = -1;
             while (ageIterator.hasNext()) {
-                Long l = (Long) ageIterator.next();
+                Long l = ageIterator.next();
                 if (lastIndex == -1) {
                     lastIndex = 0;
                     lastValue = l.longValue();
@@ -125,13 +128,13 @@ class TextCache {
             int count = 0;
             while (count < (hash.size() - maxSize)
                     && sortedTextsIterator.hasNext()) {
-                Text t = (Text) sortedTextsIterator.next();
+                Text t = sortedTextsIterator.next();
                 if (DEBUG) {
                     Debug.println("TextCache: size trim: removed "
                             + t.getNo()
                             + " of age "
-                            + (System.currentTimeMillis() - ((Long) ageMap
-                                    .get(new Integer(t.getNo()))).longValue()));
+                            + (System.currentTimeMillis() - ageMap
+                                    .get(Integer.valueOf(t.getNo())).longValue()));
                 }
                 remove(t.getNo());
                 count++;
